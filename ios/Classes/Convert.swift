@@ -123,4 +123,48 @@ class Convert {
     class func getAltitude(zoom: Double, mapView: MGLMapView) -> Double {
         return MGLAltitudeForZoomLevel(zoom, mapView.camera.pitch, mapView.camera.centerCoordinate.latitude, mapView.frame.size)
     }
+    
+    class func interpretLineOptions(options: Any?, delegate: LineOptionsSink) {
+        guard let options = options as? [String: Any] else { return }
+        
+        if let geometry = options["geometry"] as? [[Double]] {
+            delegate.setGeometry(geometry: geometry)
+        }
+        
+        if let lineJoin = options["lineJoin"] as? String {
+            delegate.setLineJoin(lineJoin: lineJoin)
+        }
+        
+        if let lineOpacity = options["lineOpacity"] as? Double {
+            delegate.setLineOpacity(lineOpacity: lineOpacity)
+        }
+        
+        if let lineColor = options["lineColor"] as? String {
+            delegate.setLineColor(lineColor: lineColor)
+        }
+        
+        if let lineWidth = options["lineWidth"] as? Double {
+            delegate.setLineWidth(lineWidth: lineWidth)
+        }
+        
+        if let lineGapWidth = options["lineGapWidth"] as? Double {
+            delegate.setLineGapWidth(lineGapWidth: lineGapWidth)
+        }
+        
+        if let lineOffset = options["lineOffset"] as? Double {
+            delegate.setLineOffset(lineOffset: lineOffset)
+        }
+        
+        if let lineBlur = options["lineBlur"] as? Double {
+            delegate.setLineBlur(lineBlur: lineBlur)
+        }
+        
+        func setLineBlur(lineBlur: Double) {
+            delegate.setLineBlur(lineBlur: lineBlur)
+        }
+
+        if let linePattern = options["linePattern"] as? String {
+            delegate.setLinePattern(linePattern: linePattern)
+        }
+    }
 }

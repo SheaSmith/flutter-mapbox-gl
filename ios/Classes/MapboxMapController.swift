@@ -13,6 +13,9 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
     private var trackCameraPosition = false
     private var myLocationEnabled = false
 
+    private var channel: FlutterMethodChannel?
+    private var lineManager: LineManager?
+    
     func view() -> UIView {
         return mapView
     }
@@ -23,8 +26,8 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
         
         super.init()
         
-        let channel = FlutterMethodChannel(name: "plugins.flutter.io/mapbox_maps_\(viewId)", binaryMessenger: messenger)
-        channel.setMethodCallHandler(onMethodCall)
+        channel = FlutterMethodChannel(name: "plugins.flutter.io/mapbox_maps_\(viewId)", binaryMessenger: messenger)
+        channel!.setMethodCallHandler(onMethodCall)
         
         mapView.delegate = self
         
@@ -36,6 +39,28 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
                 mapView.setCenter(camera.centerCoordinate, zoomLevel: zoom, direction: camera.heading, animated: false)
                 initialTilt = camera.pitch
             }
+        }
+        
+        // Add a single tap gesture recognizer. This gesture requires the built-in MGLMapView tap gestures (such as those for zoom and annotation selection) to fail.
+        let singleTap = UITapGestureRecognizer(target: self, action: #selector(handleMapTap(sender:)))
+        for recognizer in mapView.gestureRecognizers! where recognizer is UITapGestureRecognizer {
+            singleTap.require(toFail: recognizer)
+        }
+        mapView.addGestureRecognizer(singleTap)
+    }
+    
+    @objc @IBAction func handleMapTap(sender: UITapGestureRecognizer) {
+        // Get the CGPoint where the user tapped.
+        let spot = sender.location(in: mapView)
+        
+        // Access the features at that point within the state layer.
+        let features = mapView.visibleFeatures(at: spot, styleLayerIdentifiers: Set(["mapbox-ios-line-layer"]))
+        if let feature = features.first, let channel = channel {
+            var arguments: [String: Any] = [:]
+            if let id = feature.identifier {
+                arguments["line"] = "\(id)"
+            }
+            channel.invokeMethod("line#onTap", arguments: arguments)
         }
     }
     
@@ -67,6 +92,39 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
             if let camera = Convert.parseCameraUpdate(cameraUpdate: cameraUpdate, mapView: mapView) {
                 mapView.setCamera(camera, animated: true)
             }
+        case "line#add":
+            guard let lineManager = lineManager else { return }
+            guard let arguments = methodCall.arguments as? [String: Any] else { return }
+            
+            // Create a line and populate it.
+            let lineBuilder = LineBuilder(lineManager: lineManager)
+            Convert.interpretLineOptions(options: arguments["options"], delegate: lineBuilder)
+            if let line = lineBuilder.build() {
+                result("\(line.id)")
+            } else {
+                result(nil)
+            }
+        case "line#update":
+            guard let lineManager = lineManager else { return }
+            guard let arguments = methodCall.arguments as? [String: Any] else { return }
+            guard let lineIdString = arguments["line"] as? String else { return }
+            guard let lineId = UInt64(lineIdString) else { return }
+            guard let line = lineManager.getAnnotation(id: lineId) else { return }
+            
+            // Create a line and update it.
+            let lineBuilder = LineBuilder(lineManager: lineManager, line: line)
+            Convert.interpretLineOptions(options: arguments["options"], delegate: lineBuilder)
+            lineBuilder.update(id: lineId)
+            result(nil)
+        case "line#remove":
+            guard let lineManager = lineManager else { return }
+            guard let arguments = methodCall.arguments as? [String: Any] else { return }
+            guard let lineIdString = arguments["line"] as? String else { return }
+            guard let lineId = UInt64(lineIdString) else { return }
+            guard let line = lineManager.getAnnotation(id: lineId) else { return }
+            
+            lineManager.delete(annotation: line)
+            result(nil)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -91,6 +149,12 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
             let camera = mapView.camera
             camera.pitch = initialTilt
             mapView.setCamera(camera, animated: false)
+        }
+        
+        lineManager = LineManager()
+        if let lineManager = lineManager {
+            style.addSource(lineManager.source)
+            style.addLayer(lineManager.layer!)
         }
         
         mapReadyResult?(nil)
