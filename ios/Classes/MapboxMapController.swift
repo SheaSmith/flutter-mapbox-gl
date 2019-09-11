@@ -3,11 +3,11 @@ import UIKit
 import Mapbox
 
 class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, MapboxMapOptionsSink {
-    
+
     private var mapView: MGLMapView
     private var isMapReady = false
     private var mapReadyResult: FlutterResult?
-    
+
     private var initialTilt: CGFloat?
     private var cameraTargetBounds: MGLCoordinateBounds?
     private var trackCameraPosition = false
@@ -15,11 +15,11 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
 
     private var channel: FlutterMethodChannel?
     private var lineManager: LineManager?
-    
+
     func view() -> UIView {
         return mapView
     }
-    
+
     init(withFrame frame: CGRect, viewIdentifier viewId: Int64, arguments args: Any?, binaryMessenger messenger: FlutterBinaryMessenger) {
         mapView = MGLMapView(frame: frame)
         mapView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -40,7 +40,7 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
                 initialTilt = camera.pitch
             }
         }
-        
+
         // Add a single tap gesture recognizer. This gesture requires the built-in MGLMapView tap gestures (such as those for zoom and annotation selection) to fail.
         let singleTap = UITapGestureRecognizer(target: self, action: #selector(handleMapTap(sender:)))
         for recognizer in mapView.gestureRecognizers! where recognizer is UITapGestureRecognizer {
@@ -48,11 +48,11 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
         }
         mapView.addGestureRecognizer(singleTap)
     }
-    
+
     @objc @IBAction func handleMapTap(sender: UITapGestureRecognizer) {
         // Get the CGPoint where the user tapped.
         let spot = sender.location(in: mapView)
-        
+
         // Access the features at that point within the state layer.
         let features = mapView.visibleFeatures(at: spot, styleLayerIdentifiers: Set(["mapbox-ios-line-layer"]))
         if let feature = features.first, let channel = channel {
@@ -95,7 +95,7 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
         case "line#add":
             guard let lineManager = lineManager else { return }
             guard let arguments = methodCall.arguments as? [String: Any] else { return }
-            
+
             // Create a line and populate it.
             let lineBuilder = LineBuilder(lineManager: lineManager)
             Convert.interpretLineOptions(options: arguments["options"], delegate: lineBuilder)
@@ -110,7 +110,7 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
             guard let lineIdString = arguments["line"] as? String else { return }
             guard let lineId = UInt64(lineIdString) else { return }
             guard let line = lineManager.getAnnotation(id: lineId) else { return }
-            
+
             // Create a line and update it.
             let lineBuilder = LineBuilder(lineManager: lineManager, line: line)
             Convert.interpretLineOptions(options: arguments["options"], delegate: lineBuilder)
@@ -122,66 +122,72 @@ class MapboxMapController: NSObject, FlutterPlatformView, MGLMapViewDelegate, Ma
             guard let lineIdString = arguments["line"] as? String else { return }
             guard let lineId = UInt64(lineIdString) else { return }
             guard let line = lineManager.getAnnotation(id: lineId) else { return }
-            
+
             lineManager.delete(annotation: line)
             result(nil)
         default:
             result(FlutterMethodNotImplemented)
         }
     }
-    
+
     private func updateMyLocationEnabled() {
-        //TODO
+      mapView.showsUserLocation = self.myLocationEnabled
+      mapView.userTrackingMode = .followWithHeading
     }
-    
+
     private func getCamera() -> MGLMapCamera? {
         return trackCameraPosition ? mapView.camera : nil
     }
-    
+
     /*
      *  MGLMapViewDelegate
      */
     func mapView(_ mapView: MGLMapView, didFinishLoading style: MGLStyle) {
         isMapReady = true
         updateMyLocationEnabled()
-        
+
         if let initialTilt = initialTilt {
             let camera = mapView.camera
             camera.pitch = initialTilt
             mapView.setCamera(camera, animated: false)
         }
-        
+
         lineManager = LineManager()
         if let lineManager = lineManager {
             style.addSource(lineManager.source)
             style.addLayer(lineManager.layer!)
         }
-        
+
         mapReadyResult?(nil)
     }
-    
+
     func mapView(_ mapView: MGLMapView, shouldChangeFrom oldCamera: MGLMapCamera, to newCamera: MGLMapCamera) -> Bool {
         guard let bbox = cameraTargetBounds else { return true }
         // Get the current camera to restore it after.
         let currentCamera = mapView.camera
-        
+
         // From the new camera obtain the center to test if it’s inside the boundaries.
         let newCameraCenter = newCamera.centerCoordinate
-        
+
         // Set the map’s visible bounds to newCamera.
         mapView.camera = newCamera
         let newVisibleCoordinates = mapView.visibleCoordinateBounds
-        
+
         // Revert the camera.
         mapView.camera = currentCamera
-        
+
         // Test if the newCameraCenter and newVisibleCoordinates are inside bbox.
         let inside = MGLCoordinateInCoordinateBounds(newCameraCenter, bbox)
         let intersects = MGLCoordinateInCoordinateBounds(newVisibleCoordinates.ne, bbox) && MGLCoordinateInCoordinateBounds(newVisibleCoordinates.sw, bbox)
-        
+
         return inside && intersects
     }
-    
+
+    func mapView(_ mapView: MGLMapView, didChange mode:
+    MGLUserTrackingMode, animated: Bool) {
+      channel.invokeMethod("map#onCameraTrackingChanged", arguments: ["mode": mode.rawValue])
+    }
+
     /*
      *  MapboxMapOptionsSink
      */
