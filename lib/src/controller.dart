@@ -65,6 +65,9 @@ class MapboxMapController extends ChangeNotifier {
   /// Callbacks to receive tap events for symbols placed on this map.
   final ArgumentCallbacks<Circle> onCircleTapped = ArgumentCallbacks<Circle>();
 
+  /// Callbacks to receive tap events for symbols placed on this map.
+  final ArgumentCallbacks<Fill> onFillTapped = ArgumentCallbacks<Fill>();
+
   /// Callbacks to receive tap events for info windows on symbols
   final ArgumentCallbacks<Symbol> onInfoWindowTapped =
       ArgumentCallbacks<Symbol>();
@@ -83,6 +86,12 @@ class MapboxMapController extends ChangeNotifier {
   /// The returned set will be a detached snapshot of the lines collection.
   Set<Line> get lines => Set<Line>.from(_lines.values);
   final Map<String, Line> _lines = <String, Line>{};
+
+  /// The current set of lines on this map.
+  ///
+  /// The returned set will be a detached snapshot of the lines collection.
+  Set<Fill> get fills => Set<Fill>.from(_fills.values);
+  final Map<String, Fill> _fills = <String, Fill>{};
 
   /// The current set of circles on this map.
   ///
@@ -129,6 +138,13 @@ class MapboxMapController extends ChangeNotifier {
         final Circle circle = _circles[circleId];
         if (circle != null) {
           onCircleTapped(circle);
+        }
+        break;
+      case 'fill#onTap':
+        final String fillId = call.arguments['fill'];
+        final Fill fill = _fills[fillId];
+        if (fill != null) {
+          onFillTapped(fill);
         }
         break;
       case 'camera#onMoveStarted':
@@ -450,6 +466,88 @@ class MapboxMapController extends ChangeNotifier {
       'circle': id,
     });
     _circles.remove(id);
+  }
+
+  /// Adds a fill to the map, configured using the specified custom [options].
+  ///
+  /// Change listeners are notified once the fill has been added on the
+  /// platform side.
+  ///
+  /// The returned [Future] completes with the added fill once listeners have
+  /// been notified.
+  Future<Fill> addFill(FillOptions options) async {
+    final FillOptions effectiveOptions =
+    FillOptions.defaultOptions.copyWith(options);
+    final String fillId = await _channel.invokeMethod(
+      'fill#add',
+      <String, dynamic>{
+        'options': effectiveOptions._toJson(),
+      },
+    );
+    final Fill fill = Fill(fillId, effectiveOptions);
+    _fills[fillId] = fill;
+    notifyListeners();
+    return fill;
+  }
+
+  /// Updates the specified [fill] with the given [changes]. The circle must
+  /// be a current member of the [fills] set.
+  ///
+  /// Change listeners are notified once the circle has been updated on the
+  /// platform side.
+  ///
+  /// The returned [Future] completes once listeners have been notified.
+  Future<void> updateFill(Fill fill, FillOptions changes) async {
+    assert(fill != null);
+    assert(_fills[fill._id] == fill);
+    assert(changes != null);
+    await _channel.invokeMethod('fill#update', <String, dynamic>{
+      'fill': fill._id,
+      'options': changes._toJson(),
+    });
+    fill._options = fill._options.copyWith(changes);
+    notifyListeners();
+  }
+
+  /// Removes the specified [fill] from the map. The fill must be a current
+  /// member of the [fills] set.
+  ///
+  /// Change listeners are notified once the fill has been removed on the
+  /// platform side.
+  ///
+  /// The returned [Future] completes once listeners have been notified.
+  Future<void> removeFill(Fill fill) async {
+    assert(fill != null);
+    assert(_fills[fill._id] == fill);
+    await _removeFill(fill._id);
+    notifyListeners();
+  }
+
+  /// Removes all [fills] from the map.
+  ///
+  /// Change listeners are notified once all fills have been removed on the
+  /// platform side.
+  ///
+  /// The returned [Future] completes once listeners have been notified.
+  Future<void> clearFilles() async {
+    assert(_fills != null);
+    final List<String> fillIds = List<String>.from(_fills.keys);
+    for (String id in fillIds) {
+      await _removeFill(id);
+    }
+    notifyListeners();
+  }
+
+  /// Helper method to remove a single circle from the map. Consumed by
+  /// [removeCircle] and [clearCircles].
+  ///
+  /// The returned [Future] completes once the circle has been removed from
+  /// [_circles].
+  Future<void> _removeFill(String id) async {
+    await _channel.invokeMethod('fill#remove', <String, dynamic>{
+      'fill': id,
+    });
+    _fills.remove(id);
   }
 
   Future<List> queryRenderedFeatures(

@@ -247,6 +247,10 @@ final class MapboxMapController
     return new CircleBuilder(circleManager);
   }
 
+  private FillBuilder newFillBuilder() {
+    return new FillBuilder(fillManager);
+  }
+
   private void removeCircle(String circleId) {
     final CircleController circleController = circles.remove(circleId);
     if (circleController != null) {
@@ -269,12 +273,12 @@ final class MapboxMapController
     }
   }
 
-  private CircleController fill(String fillId) {
-    final CircleController circle = circles.get(fillId);
-    if (circle == null) {
+  private FillController fill(String fillId) {
+    final FillController fill = fills.get(fillId);
+    if (fill == null) {
       throw new IllegalArgumentException("Unknown fill: " + fillId);
     }
-    return circle;
+    return fill;
   }
 
   @Override

@@ -48,17 +48,12 @@ class PlaceFillBodyState extends State<PlaceFillBody> {
   void _onFillTapped(Fill fill) {
     if (_selectedFill != null) {
       _updateSelectedFill(
-        const FillOptions(fillRadius: 60),
+        const FillOptions(fillColor: "rgba(255, 255, 255, 1)"),
       );
     }
     setState(() {
       _selectedFill = fill;
     });
-    _updateSelectedFill(
-      FillOptions(
-        fillRadius: 30,
-      ),
-    );
   }
 
   void _updateSelectedFill(FillOptions changes) {
@@ -103,52 +98,6 @@ class PlaceFillBodyState extends State<PlaceFillBody> {
     );
   }
 
-  void _changeDraggable() {
-    bool draggable = _selectedFill.options.draggable;
-    if (draggable == null) {
-      // default value
-      draggable = false;
-    }
-    _updateSelectedFill(
-      FillOptions(
-        draggable: !draggable,
-      ),
-    );
-  }
-
-  void _changeFillStrokeOpacity() {
-    double current = _selectedFill.options.fillStrokeOpacity;
-    if (current == null) {
-      // default value
-      current = 1.0;
-    }
-
-    _updateSelectedFill(
-      FillOptions(fillStrokeOpacity: current < 0.1 ? 1.0 : current * 0.75),
-    );
-  }
-
-  void _changeFillStrokeWidth() {
-    double current = _selectedFill.options.fillStrokeWidth;
-    if (current == null) {
-      // default value
-      current = 0;
-    }
-    _updateSelectedFill(FillOptions(fillStrokeWidth: current == 0 ? 5.0 : 0));
-  }
-
-  Future<void> _changeFillStrokeColor() async {
-    String current = _selectedFill.options.fillStrokeColor;
-    if (current == null) {
-      // default value
-      current = "#FFFFFF";
-    }
-
-    _updateSelectedFill(
-      FillOptions(fillStrokeColor: current == "#FFFFFF" ? "#FF0000" : "#FFFFFF"),
-    );
-  }
-
   Future<void> _changeFillOpacity() async {
     double current = _selectedFill.options.fillOpacity;
     if (current == null) {
@@ -158,17 +107,6 @@ class PlaceFillBodyState extends State<PlaceFillBody> {
 
     _updateSelectedFill(
       FillOptions(fillOpacity: current < 0.1 ? 1.0 : current * 0.75),
-    );
-  }
-
-  Future<void> _changeFillRadius() async {
-    double current = _selectedFill.options.fillRadius;
-    if (current == null) {
-      // default value
-      current = 0;
-    }
-    _updateSelectedFill(
-      FillOptions(fillRadius: current == 120.0 ? 30.0 : current + 30.0),
     );
   }
 
@@ -182,17 +120,6 @@ class PlaceFillBodyState extends State<PlaceFillBody> {
     _updateSelectedFill(
       FillOptions(
           fillColor: "#FFFF00"),
-    );
-  }
-
-  Future<void> _changeFillBlur() async {
-    double current = _selectedFill.options.fillBlur;
-    if (current == null) {
-      // default value
-      current = 0;
-    }
-    _updateSelectedFill(
-      FillOptions(fillBlur: current == 0.75 ? 0 : 0.75),
     );
   }
 
@@ -242,50 +169,16 @@ class PlaceFillBodyState extends State<PlaceFillBody> {
                               (_selectedFill == null) ? null : _changeFillOpacity,
                         ),
                         FlatButton(
-                          child: const Text('change fill-radius'),
-                          onPressed: (_selectedFill == null)
-                              ? null
-                              : _changeFillRadius,
-                        ),
-                        FlatButton(
                           child: const Text('change fill-color'),
                           onPressed:
                           (_selectedFill == null) ? null : _changeFillColor,
-                        ),
-                        FlatButton(
-                          child: const Text('change fill-blur'),
-                          onPressed:
-                          (_selectedFill == null) ? null : _changeFillBlur,
-                        ),
-                        FlatButton(
-                          child: const Text('change fill-stroke-width'),
-                          onPressed:
-                              (_selectedFill == null) ? null : _changeFillStrokeWidth,
-                        ),
-                        FlatButton(
-                          child: const Text('change fill-stroke-color'),
-                          onPressed: (_selectedFill == null)
-                              ? null
-                              : _changeFillStrokeColor,
-                        ),
-                        FlatButton(
-                          child: const Text('change fill-stroke-opacity'),
-                          onPressed: (_selectedFill == null)
-                              ? null
-                              : _changeFillStrokeOpacity,
                         ),
                         FlatButton(
                           child: const Text('change position'),
                           onPressed: (_selectedFill == null)
                               ? null
                               : _changePosition,
-                        ),
-                        FlatButton(
-                          child: const Text('toggle draggable'),
-                          onPressed: (_selectedFill == null)
-                              ? null
-                              : _changeDraggable,
-                        ),
+                        )
                       ],
                     ),
                   ],

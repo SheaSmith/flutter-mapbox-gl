@@ -74,7 +74,7 @@ class FillOptions {
   dynamic _toJson() {
     final Map<String, dynamic> json = <String, dynamic>{};
 
-    void addIfPresent(String fieldName, dynamic value) {q
+    void addIfPresent(String fieldName, dynamic value) {
     if (value != null) {
       json[fieldName] = value;
     }
