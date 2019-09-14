@@ -10,6 +10,7 @@ import 'move_camera.dart';
 import 'page.dart';
 import 'place_symbol.dart';
 import 'place_circle.dart';
+import 'place_fill.dart';
 import 'scrolling_map.dart';
 
 final List<Page> _allPages = <Page>[
@@ -19,6 +20,7 @@ final List<Page> _allPages = <Page>[
   PlaceSymbolPage(),
   LinePage(),
   PlaceCirclePage(),
+  PlaceFillPage(),
   ScrollingMapPage(),
 ];
 
