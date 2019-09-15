@@ -63,10 +63,7 @@ class PlaceFillBodyState extends State<PlaceFillBody> {
   void _add() {
     controller.addFill(
       FillOptions(
-          geometry: LatLng(
-            center.latitude + sin(_fillCount * pi / 6.0) / 20.0,
-            center.longitude + cos(_fillCount * pi / 6.0) / 20.0,
-          ),
+          geometry: [LatLng(0.0, 0.0), LatLng(10.0, 0.0), LatLng(20.0, 30.0), LatLng(0.0,0.0)],
           fillColor: "#FF0000"),
     );
     setState(() {
@@ -80,22 +77,6 @@ class PlaceFillBodyState extends State<PlaceFillBody> {
       _selectedFill = null;
       _fillCount -= 1;
     });
-  }
-
-  void _changePosition() {
-    final LatLng current = _selectedFill.options.geometry;
-    final Offset offset = Offset(
-      center.latitude - current.latitude,
-      center.longitude - current.longitude,
-    );
-    _updateSelectedFill(
-      FillOptions(
-        geometry: LatLng(
-          center.latitude + offset.dy,
-          center.longitude + offset.dx,
-        ),
-      ),
-    );
   }
 
   Future<void> _changeFillOpacity() async {
@@ -120,6 +101,19 @@ class PlaceFillBodyState extends State<PlaceFillBody> {
     _updateSelectedFill(
       FillOptions(
           fillColor: "#FFFF00"),
+    );
+  }
+
+  Future<void> _changeFillStrokeColor() async {
+    String current = _selectedFill.options.fillOutlineColor;
+    if (current == null) {
+      // default value
+      current = "#FFFFFF";
+    }
+
+    _updateSelectedFill(
+      FillOptions(
+          fillOutlineColor: current == "#FFFFFF" ? "#FF0000" : "#FFFFFF"),
     );
   }
 
@@ -174,11 +168,11 @@ class PlaceFillBodyState extends State<PlaceFillBody> {
                           (_selectedFill == null) ? null : _changeFillColor,
                         ),
                         FlatButton(
-                          child: const Text('change position'),
+                          child: const Text('change fill-stroke-color'),
                           onPressed: (_selectedFill == null)
                               ? null
-                              : _changePosition,
-                        )
+                              : _changeFillStrokeColor,
+                        ),
                       ],
                     ),
                   ],

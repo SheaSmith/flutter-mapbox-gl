@@ -48,14 +48,13 @@ class FillOptions {
   final String fillColor;
   final String fillOutlineColor;
   final String fillPattern;
-  final LatLng geometry;
+  final List<LatLng> geometry;
 
   static const FillOptions defaultOptions = FillOptions(
     fillOpacity: 1.0,
     fillColor: "rgba(0, 0, 0, 1)",
     fillOutlineColor: "rgba(0, 0, 0, 1)",
-    fillPattern: "pedestrian-polygon",
-    geometry: LatLng(0.0, 0.0),
+    geometry: [LatLng(0.0, 0.0), LatLng(10.0, 10.0), LatLng(20.0, 20.0)],
   );
 
   FillOptions copyWith(FillOptions changes) {
@@ -75,16 +74,20 @@ class FillOptions {
     final Map<String, dynamic> json = <String, dynamic>{};
 
     void addIfPresent(String fieldName, dynamic value) {
-    if (value != null) {
-      json[fieldName] = value;
-    }
+      if (value != null && !(value is List<dynamic> && value.length == 0)) {
+        json[fieldName] = value;
+      }
     }
 
     addIfPresent('fill-opacity', fillOpacity);
     addIfPresent('fill-color', fillColor);
     addIfPresent('fill-outline-color', fillOutlineColor);
     addIfPresent('fill-pattern', fillPattern);
-    addIfPresent('geometry', geometry?._toJson());
+
+    List<dynamic> list = new List();
+    geometry?.forEach((g) => list.add(g._toJson()));
+
+    addIfPresent('geometry', list);
     return json;
   }
 }

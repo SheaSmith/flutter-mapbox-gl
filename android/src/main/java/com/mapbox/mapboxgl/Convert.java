@@ -5,6 +5,8 @@
 package com.mapbox.mapboxgl;
 
 import android.graphics.Point;
+import android.util.Log;
+
 import com.mapbox.geojson.Polygon;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdate;
@@ -458,19 +460,21 @@ class Convert {
 
   static void interpretFillOptions(Object o, FillOptionsSink sink) {
     final Map<?, ?> data = toMap(o);
-    final Object fillOpacity = data.get("fillOpacity");
+    final Object fillOpacity = data.get("fill-opacity");
     if (fillOpacity != null) {
+      Log.d("TEST", toFloat(fillOpacity) + " HUHHHH");
       sink.setFillOpacity(toFloat(fillOpacity));
     }
-    final Object fillColor = data.get("fillColor");
+    final Object fillColor = data.get("fill-color");
     if (fillColor != null) {
+      Log.d("TEST", toString(fillColor) + " HUHHHH");
       sink.setFillColor(toString(fillColor));
     }
-    final Object fillOutlineColor = data.get("fillOutlineColor");
+    final Object fillOutlineColor = data.get("fill-outline-color");
     if (fillOutlineColor != null) {
       sink.setFillOutlineColor(toString(fillOutlineColor));
     }
-    final Object fillPattern = data.get("fillPattern");
+    final Object fillPattern = data.get("fill-pattern");
     if (fillPattern != null) {
       sink.setFillPattern(toString(fillPattern));
     }
@@ -488,8 +492,14 @@ class Convert {
     if (o == null) {
       return null;
     }
-    // todo add conversion
-    return new ArrayList<>();
+    List<List<Double>> tempList = (List<List<Double>>) o;
+    List<LatLng> lats = new ArrayList<>();
+    for (List<Double> coords : tempList) {
+      lats.add(new LatLng(coords.get(0), coords.get(1)));
+    }
+    List<List<LatLng>> lats2 = new ArrayList<>();
+    lats2.add(lats);
+    return lats2;
   }
 
   static Polygon interpretListLatLng(List<List<LatLng>> geometry) {

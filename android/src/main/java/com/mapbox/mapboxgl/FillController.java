@@ -7,6 +7,8 @@
 package com.mapbox.mapboxgl;
 
 import android.graphics.Color;
+import android.util.Log;
+
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.plugins.annotation.Fill;
 import com.mapbox.mapboxsdk.plugins.annotation.FillManager;

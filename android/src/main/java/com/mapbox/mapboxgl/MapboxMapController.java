@@ -590,6 +590,13 @@ final class MapboxMapController
         circleController.onTap();
       }
     }
+
+    if (annotation instanceof Fill) {
+      final FillController fillController = fills.get(String.valueOf(annotation.getId()));
+      if (fillController != null) {
+        fillController.onTap();
+      }
+    }
   }
 
   @Override
