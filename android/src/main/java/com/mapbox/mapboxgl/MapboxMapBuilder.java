@@ -21,7 +21,7 @@ class MapboxMapBuilder implements MapboxMapOptionsSink {
   public final String TAG = getClass().getSimpleName();
   private final MapboxMapOptions options = new MapboxMapOptions()
     .textureMode(true)
-    .attributionEnabled(false);
+    .attributionEnabled(true);
   private boolean trackCameraPosition = false;
   private boolean myLocationEnabled = false;
   private int myLocationTrackingMode = 0;
